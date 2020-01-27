@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	C "github.com/armfazh/tozan-ecc/curve"
-	"github.com/armfazh/tozan-ecc/internal/toy"
+	"github.com/armfazh/tozan-ecc/curve/toy"
 )
 
 func TestCurves(t *testing.T) {
