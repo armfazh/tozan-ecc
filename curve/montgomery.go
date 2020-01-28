@@ -14,12 +14,8 @@ type MTCurve struct{ *params }
 type M = *MTCurve
 
 func (e *MTCurve) String() string { return "By^2=x^3+Ax^2+x\n" + e.params.String() }
-
-// NewMontgomery returns a Montgomery curve
-func NewMontgomery(id CurveID, f GF.Field, a, b GF.Elt, r, h *big.Int) *MTCurve {
-	if e := (&MTCurve{&params{
-		Id: id, F: f, A: a, B: b, R: r, H: h,
-	}}); e.IsValid() {
+func (e *MTCurve) New() EllCurve {
+	if e.IsValid() {
 		return e
 	}
 	panic(errors.New("can't instantiate a Montgomery curve"))

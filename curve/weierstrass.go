@@ -14,12 +14,8 @@ type WECurve struct{ *params }
 type W = *WECurve
 
 func (e *WECurve) String() string { return "y^2=x^3+Ax+B\n" + e.params.String() }
-
-// NewWeierstrass returns a Weierstrass curve
-func NewWeierstrass(id CurveID, f GF.Field, a, b GF.Elt, r, h *big.Int) *WECurve {
-	if e := (&WECurve{&params{
-		Id: id, F: f, A: a, B: b, R: r, H: h,
-	}}); e.IsValid() {
+func (e *WECurve) New() EllCurve {
+	if e.IsValid() {
 		return e
 	}
 	panic(errors.New("can't instantiate a Weierstrass curve"))
@@ -32,6 +28,7 @@ func (e *WECurve) NewPoint(x, y GF.Elt) (P Point) {
 	}
 	panic(fmt.Errorf("p=%v not on curve", P))
 }
+
 func (e *WECurve) IsValid() bool {
 	F := e.F
 	t0 := F.Sqr(e.A)          // A^2

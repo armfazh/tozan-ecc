@@ -8,7 +8,7 @@ import (
 )
 
 type params struct {
-	Id      CurveID
+	Name    string
 	F       GF.Field
 	A, B, D GF.Elt
 	R       *big.Int
@@ -16,7 +16,7 @@ type params struct {
 }
 
 func (e *params) String() string {
-	return fmt.Sprintf("Id: %v\nF: %v\nA: %v\nB: %v\n", e.Id, e.F, e.A, e.B)
+	return fmt.Sprintf("Name: %v\nF: %v\nA: %v\nB: %v\n", e.Name, e.F, e.A, e.B)
 }
 func (e *params) Field() GF.Field    { return e.F }
 func (e *params) Order() *big.Int    { return e.R }

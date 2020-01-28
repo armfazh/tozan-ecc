@@ -27,6 +27,7 @@ type EllCurve interface {
 	// Predicates
 	IsOnCurve(Point) bool
 	IsEqual(EllCurve) bool
+	IsValid() bool
 	// Arithmetic operations
 	Identity() Point
 	Neg(Point) Point

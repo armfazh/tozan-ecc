@@ -10,14 +10,14 @@ import (
 // fpElt is a prime field element.
 type fpElt struct{ n *big.Int }
 
-func (e fpElt) String() string { return /*"0x" +*/ e.n.Text(10) }
+func (e fpElt) String() string { return "0x" + e.n.Text(16) }
 func (e fpElt) Copy() Elt      { return &fpElt{new(big.Int).Set(e.n)} }
 
 // fp implements a prime field.
 type fp struct {
-	p   *big.Int
-	id  ID
-	cte struct {
+	p    *big.Int
+	name string
+	cte  struct {
 		pMinus1div2 *big.Int
 		pMinus2     *big.Int
 	}
@@ -25,12 +25,12 @@ type fp struct {
 }
 
 // NewFp creates a prime field as Z/pZ given p as an int, uint, *big.Int or string.
-func NewFp(id ID, p interface{}) Field {
+func NewFp(name string, p interface{}) Field {
 	prime := FromType(p)
 	if !prime.ProbablyPrime(4) {
 		panic(fmt.Errorf("Modulus is not prime p:%v", prime))
 	}
-	f := fp{p: prime, id: id}
+	f := fp{p: prime, name: name}
 	f.precmp()
 	return f
 }
@@ -59,7 +59,7 @@ func (f *fp) precmp() {
 	f.cte.pMinus2 = pMinus2
 }
 
-func (f fp) String() string       { return fmt.Sprintf("GF(%v)", f.id) }
+func (f fp) String() string       { return fmt.Sprintf("GF(%v)", f.name) }
 func (f fp) Zero() Elt            { return &fpElt{big.NewInt(0)} }
 func (f fp) One() Elt             { return &fpElt{big.NewInt(1)} }
 func (f fp) Rand(r io.Reader) Elt { e, _ := rand.Int(r, f.p); return &fpElt{e} }

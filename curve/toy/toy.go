@@ -2,76 +2,68 @@
 package toy
 
 import (
+	"fmt"
 	"math/big"
 
 	C "github.com/armfazh/tozan-ecc/curve"
 	GF "github.com/armfazh/tozan-ecc/field"
 )
 
-// EC is an elliptic curve
-type EC struct {
-	E C.EllCurve
-	P C.Point
+// ID is an identifier of a toy curve.
+type ID string
+
+const (
+	W0    ID = "W0"
+	W1    ID = "W1"
+	W1ISO ID = "W1ISO"
+	W2    ID = "W2"
+	W3    ID = "W3"
+	WC0   ID = "WC0"
+	M0    ID = "M0"
+	M1    ID = "M1"
+	E0    ID = "E0"
+	E1    ID = "E1"
+)
+
+type params struct {
+	model C.Model
+	p     int
+	a, b  int
+	h, r  int
+	x, y  int
 }
+
+// Curves is a list of toy curves.
+var Curves []ID
+var toyCurves map[ID]*params
 
 func init() {
-	initCurves()
+	Curves = make([]ID, 0, 10)
+	toyCurves = make(map[ID]*params)
+
+	W0.register(&params{C.Weierstrass, 53, 3, 2, 51, 3, 46, 3})
+	W1.register(&params{C.Weierstrass, 53, 0, 1, 54, 2, 13, 5})
+	W1ISO.register(&params{C.Weierstrass, 53, 38, 22, 54, 2, 41, 45})
+	W2.register(&params{C.Weierstrass, 53, 0, 2, 51, 3, 37, 27})
+	W3.register(&params{C.Weierstrass, 59, 16, 0, 60, 4, 33, 11})
+	WC0.register(&params{C.WeierstrassC, 53, 2, 3, 66, 6, 45, 4})
+	M0.register(&params{C.Montgomery, 53, 4, 3, 44, 4, 16, 4})
+	M1.register(&params{C.Montgomery, 53, 3, 1, 48, 4, 14, 22})
+	E0.register(&params{C.TwistedEdwards, 53, 1, 3, 44, 4, 17, 49})
+	E1.register(&params{C.TwistedEdwards, 53, -1, 12, 48, 4, 3, 19})
 }
 
-// ToyCurves is
-var ToyCurves map[string]EC
+func (id ID) register(p *params) { toyCurves[id] = p; Curves = append(Curves, id) }
 
-func initCurves() {
-	ToyCurves = make(map[string]EC)
-
-	var P53, P59 GF.ID
-	var f53 = GF.NewFp(P53, 53) // 1mod4, 2mod3
-	var f59 = GF.NewFp(P59, 59) // 3mod4, 2mod3
-
-	registerToyCurve("W0", C.NewWeierstrass(C.Custom, f53,
-		f53.Elt(3), f53.Elt(2), big.NewInt(51), big.NewInt(3)),
-		f53.Elt(46), f53.Elt(3))
-
-	registerToyCurve("W1", C.NewWeierstrass(C.Custom, f53,
-		f53.Zero(), f53.One(), big.NewInt(54), big.NewInt(2)),
-		f53.Elt(13), f53.Elt(5))
-
-	registerToyCurve("W1iso", C.NewWeierstrass(C.Custom, f53,
-		f53.Elt(38), f53.Elt(22), big.NewInt(54), big.NewInt(2)),
-		f53.Elt(41), f53.Elt(45))
-
-	registerToyCurve("W2", C.NewWeierstrass(C.Custom, f53,
-		f53.Zero(), f53.Elt(2), big.NewInt(51), big.NewInt(3)),
-		f53.Elt(37), f53.Elt(27))
-
-	registerToyCurve("W3", C.NewWeierstrass(C.Custom, f59,
-		f59.Elt(16), f59.Zero(), big.NewInt(60), big.NewInt(4)),
-		f59.Elt(33), f59.Elt(11))
-
-	registerToyCurve("WC0", C.NewWeierstrassC(C.Custom, f53,
-		f53.Elt(2), f53.Elt(3), big.NewInt(66), big.NewInt(6)),
-		f53.Elt(45), f53.Elt(4))
-
-	registerToyCurve("M0", C.NewMontgomery(C.Custom, f53,
-		f53.Elt(4), f53.Elt(3), big.NewInt(44), big.NewInt(4)),
-		f53.Elt(16), f53.Elt(4))
-
-	registerToyCurve("M1", C.NewMontgomery(C.Custom, f53,
-		f53.Elt(3), f53.Elt(1), big.NewInt(48), big.NewInt(4)),
-		f53.Elt(14), f53.Elt(22))
-
-	registerToyCurve("E0", C.NewEdwards(C.Custom, f53,
-		f53.Elt(1), f53.Elt(3), big.NewInt(44), big.NewInt(4)),
-		f53.Elt(17), f53.Elt(49))
-
-	registerToyCurve("E1", C.NewEdwards(C.Custom, f53,
-		f53.Elt(-1), f53.Elt(12), big.NewInt(48), big.NewInt(4)),
-		f53.Elt(3), f53.Elt(19))
-
-}
-
-// registerToyCurve is
-func registerToyCurve(name string, e C.EllCurve, x, y GF.Elt) {
-	n := EC{E: e, P: e.NewPoint(x, y)}
-	ToyCurves[name] = n
+// New returns an elliptic curve and a generator point.
+func (id ID) New() (C.EllCurve, C.Point, error) {
+	if v, ok := toyCurves[id]; ok {
+		F := GF.NewFp(fmt.Sprintf("%v", v.p), v.p)
+		E := v.model.New(string(id), F,
+			F.Elt(v.a), F.Elt(v.b),
+			big.NewInt(int64(v.r)), big.NewInt(int64(v.h)))
+		P := E.NewPoint(F.Elt(v.x), F.Elt(v.y))
+		return E, P, nil
+	}
+	return nil, nil, fmt.Errorf("curve not supported")
 }

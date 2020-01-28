@@ -1,6 +1,7 @@
 package field_test
 
 import (
+	"fmt"
 	"testing"
 
 	GF "github.com/armfazh/tozan-ecc/field"
@@ -19,7 +20,7 @@ func TestSqrt(t *testing.T) {
 }
 
 func testSqrt(t *testing.T, p int) {
-	F := GF.NewFp(GF.ID(p), p)
+	F := GF.NewFp(fmt.Sprintf("%v", p), p)
 	for i := 0; i < p; i++ {
 		x := F.Elt(i)
 		if F.IsSquare(x) {

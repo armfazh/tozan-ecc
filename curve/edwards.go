@@ -16,17 +16,13 @@ type T = *TECurve
 func (e *TECurve) String() string {
 	return fmt.Sprintf("Ax^2+y^2=1+Dx^2y^2\nF: %v\nA: %v\nD: %v\n", e.F, e.A, e.D)
 }
-
-// NewEdwards returns a twisted Edwards curve
-func NewEdwards(id CurveID, f GF.Field, a, d GF.Elt, r, h *big.Int) *TECurve {
-	if e := (&TECurve{&params{
-		Id: id, F: f, A: a, D: d, R: r, H: h,
-	}}); e.IsValid() {
+func (e *TECurve) New() EllCurve {
+	e.params.D = e.params.B
+	if e.IsValid() {
 		return e
 	}
 	panic(errors.New("can't instantiate a twisted Edwards curve"))
 }
-
 func (e *TECurve) NewPoint(x, y GF.Elt) (P Point) {
 	if P = (&ptTe{e, &afPoint{x: x, y: y}}); e.IsOnCurve(P) {
 		return P
