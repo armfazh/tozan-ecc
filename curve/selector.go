@@ -19,13 +19,13 @@ func (m Model) New(name string, f GF.Field, a, b GF.Elt, r, h *big.Int) EllCurve
 	p := &params{Name: name, F: f, A: a, B: b, R: r, H: h}
 	switch m {
 	case Weierstrass:
-		return (&WECurve{p}).New()
+		return (&weCurve{p}).New()
 	case WeierstrassC:
-		return (&WCCurve{params: p}).New()
+		return (&wcCurve{params: p}).New()
 	case TwistedEdwards:
-		return (&TECurve{p}).New()
+		return (&teCurve{p}).New()
 	case Montgomery:
-		return (&MTCurve{p}).New()
+		return (&mtCurve{p}).New()
 	default:
 		panic("elliptic curve model not supported")
 	}

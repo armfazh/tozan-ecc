@@ -8,43 +8,43 @@ import (
 	GF "github.com/armfazh/tozan-ecc/field"
 )
 
-// TECurve is a twisted Edwards curve
-type TECurve struct{ *params }
+// teCurve is a twisted Edwards curve
+type teCurve struct{ *params }
 
-type T = *TECurve
+type T = *teCurve
 
-func (e *TECurve) String() string {
+func (e *teCurve) String() string {
 	return fmt.Sprintf("Ax^2+y^2=1+Dx^2y^2\nF: %v\nA: %v\nD: %v\n", e.F, e.A, e.D)
 }
-func (e *TECurve) New() EllCurve {
+func (e *teCurve) New() EllCurve {
 	e.params.D = e.params.B
 	if e.IsValid() {
 		return e
 	}
 	panic(errors.New("can't instantiate a twisted Edwards curve"))
 }
-func (e *TECurve) NewPoint(x, y GF.Elt) (P Point) {
+func (e *teCurve) NewPoint(x, y GF.Elt) (P Point) {
 	if P = (&ptTe{e, &afPoint{x: x, y: y}}); e.IsOnCurve(P) {
 		return P
 	}
 	panic(fmt.Errorf("p:%v not on %v", P, e))
 }
-func (e *TECurve) IsValid() bool {
+func (e *teCurve) IsValid() bool {
 	F := e.F
 	cond1 := !F.AreEqual(e.A, e.D) // A != D
 	cond2 := !F.IsZero(e.A)        // A != 0
 	cond3 := !F.IsZero(e.D)        // D != 0
 	return cond1 && cond2 && cond3
 }
-func (e *TECurve) IsEqual(ec EllCurve) bool {
-	e0 := ec.(*TECurve)
+func (e *teCurve) IsEqual(ec EllCurve) bool {
+	e0 := ec.(*teCurve)
 	return e.F.IsEqual(e0.F) && e.F.AreEqual(e.A, e0.A) && e.F.AreEqual(e.D, e0.D)
 }
-func (e *TECurve) IsComplete() bool {
+func (e *teCurve) IsComplete() bool {
 	F := e.F
 	return F.IsSquare(e.A) && !F.IsSquare(e.D) // A != D
 }
-func (e *TECurve) IsOnCurve(p Point) bool {
+func (e *teCurve) IsOnCurve(p Point) bool {
 	P := p.(*ptTe)
 	F := e.F
 	var t0, t1, t2 GF.Elt
@@ -57,8 +57,8 @@ func (e *TECurve) IsOnCurve(p Point) bool {
 	t0 = F.Add(t0, t1)      // Ax^2+y^2
 	return F.AreEqual(t0, t2)
 }
-func (e *TECurve) Identity() Point { return e.NewPoint(e.F.Zero(), e.F.One()) }
-func (e *TECurve) Add(p, q Point) Point {
+func (e *teCurve) Identity() Point { return e.NewPoint(e.F.Zero(), e.F.One()) }
+func (e *teCurve) Add(p, q Point) Point {
 	P := p.(*ptTe)
 	Q := q.(*ptTe)
 	F := e.F
@@ -86,33 +86,25 @@ func (e *TECurve) Add(p, q Point) Point {
 
 	return &ptTe{e, &afPoint{x: x, y: y}}
 }
-func (e *TECurve) Neg(p Point) Point {
+func (e *teCurve) Neg(p Point) Point {
 	P := p.(*ptTe)
 	return &ptTe{e, &afPoint{x: e.F.Neg(P.x), y: P.y.Copy()}}
 }
-func (e *TECurve) Double(p Point) Point { return e.Add(p, p) }
-func (e *TECurve) ScalarMult(p Point, k *big.Int) Point {
-	Q := e.Identity()
-	for i := k.BitLen() - 1; i >= 0; i-- {
-		Q = e.Double(Q)
-		if k.Bit(i) != 0 {
-			Q = e.Add(Q, p)
-		}
-	}
-	return Q
-}
-func (e *TECurve) ClearCofactor(p Point) Point { return e.ScalarMult(p, e.H) }
+func (e *teCurve) Double(p Point) Point                 { return e.Add(p, p) }
+func (e *teCurve) ScalarMult(p Point, k *big.Int) Point { return e.params.scalarMult(e, p, k) }
+
+func (e *teCurve) ClearCofactor(p Point) Point { return e.ScalarMult(p, e.H) }
 
 type ptTe struct {
-	*TECurve
+	*teCurve
 	*afPoint
 }
 
 func (p *ptTe) String() string { return p.afPoint.String() }
-func (p *ptTe) Copy() Point    { return &ptTe{p.TECurve, p.copy()} }
+func (p *ptTe) Copy() Point    { return &ptTe{p.teCurve, p.copy()} }
 func (p *ptTe) IsEqual(q Point) bool {
 	qq := q.(*ptTe)
-	return p.TECurve.IsEqual(qq.TECurve) && p.isEqual(p.F, qq.afPoint)
+	return p.teCurve.IsEqual(qq.teCurve) && p.isEqual(p.F, qq.afPoint)
 }
 func (p *ptTe) IsIdentity() bool   { return p.F.IsZero(p.x) && p.F.AreEqual(p.y, p.F.One()) }
 func (p *ptTe) IsTwoTorsion() bool { return p.F.IsZero(p.x) && p.F.AreEqual(p.y, p.F.Elt(-1)) }

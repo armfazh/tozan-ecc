@@ -5,18 +5,18 @@ import (
 )
 
 type mt2wec struct {
-	E0   *MTCurve
-	E1   *WCCurve
+	E0   *mtCurve
+	E1   *wcCurve
 	invB GF.Elt
 }
 
-func (e *MTCurve) ToWeierstrassC() RationalMap {
+func (e *mtCurve) ToWeierstrassC() RationalMap {
 	F := e.Field()
 	invB := F.Inv(e.params.B)
 	a := F.Mul(invB, e.params.A)
 	b := F.Sqr(invB)
 	e1 := WeierstrassC.New("WC from "+e.Name, F, a, b, e.params.R, e.params.H)
-	return &mt2wec{E0: e, E1: e1.(*WCCurve), invB: invB}
+	return &mt2wec{E0: e, E1: e1.(*wcCurve), invB: invB}
 }
 
 func (r *mt2wec) Domain() EllCurve   { return r.E0 }
@@ -44,12 +44,12 @@ func (r *mt2wec) Pull(p Point) Point {
 }
 
 type te2wec struct {
-	E0       *TECurve
-	E1       *WCCurve
+	E0       *teCurve
+	E1       *wcCurve
 	invSqrtD GF.Elt // 4/(a-d)
 }
 
-func (e *TECurve) ToWeierstrassC() RationalMap {
+func (e *teCurve) ToWeierstrassC() RationalMap {
 	F := e.Field()
 	half := F.Inv(F.Elt(2))             // 1/2
 	t0 := F.Add(e.params.A, e.params.D) // a+d
@@ -61,7 +61,7 @@ func (e *TECurve) ToWeierstrassC() RationalMap {
 	invSqrtD := F.Inv(t0)              // 4/(a-d)
 	b := F.Sqr(t0)                     // B = (a-d)^2/16
 	e1 := WeierstrassC.New("WC from "+e.Name, F, a, b, e.params.R, e.params.H)
-	return &te2wec{E0: e, E1: e1.(*WCCurve), invSqrtD: invSqrtD}
+	return &te2wec{E0: e, E1: e1.(*wcCurve), invSqrtD: invSqrtD}
 }
 
 func (r *te2wec) Domain() EllCurve   { return r.E0 }
@@ -101,12 +101,12 @@ func (r *te2wec) Pull(p Point) Point {
 }
 
 type wc2we struct {
-	E0    *WCCurve
-	E1    *WECurve
+	E0    *wcCurve
+	E1    *weCurve
 	Adiv3 GF.Elt
 }
 
-func (e *WCCurve) ToWeierstrass() RationalMap {
+func (e *wcCurve) ToWeierstrass() RationalMap {
 	F := e.Field()
 	var t0, t1 GF.Elt
 	t0 = F.Inv(F.Elt(3))    // 1/3
@@ -123,7 +123,7 @@ func (e *WCCurve) ToWeierstrass() RationalMap {
 	t0 = F.Inv(F.Elt(27))     // 1/27
 	B := F.Mul(t0, t1)        // A(2A^2 - 9B)/27
 	e1 := Weierstrass.New("W from "+e.Name, F, A, B, e.params.R, e.params.H)
-	return &wc2we{E0: e, E1: e1.(*WECurve), Adiv3: Adiv3}
+	return &wc2we{E0: e, E1: e1.(*weCurve), Adiv3: Adiv3}
 }
 func (r *wc2we) Domain() EllCurve   { return r.E0 }
 func (r *wc2we) Codomain() EllCurve { return r.E1 }

@@ -8,37 +8,37 @@ import (
 	GF "github.com/armfazh/tozan-ecc/field"
 )
 
-// MTCurve is a Montgomery curve
-type MTCurve struct{ *params }
+// mtCurve is a Montgomery curve
+type mtCurve struct{ *params }
 
-type M = *MTCurve
+type M = *mtCurve
 
-func (e *MTCurve) String() string { return "By^2=x^3+Ax^2+x\n" + e.params.String() }
-func (e *MTCurve) New() EllCurve {
+func (e *mtCurve) String() string { return "By^2=x^3+Ax^2+x\n" + e.params.String() }
+func (e *mtCurve) New() EllCurve {
 	if e.IsValid() {
 		return e
 	}
 	panic(errors.New("can't instantiate a Montgomery curve"))
 }
 
-func (e *MTCurve) NewPoint(x, y GF.Elt) (P Point) {
+func (e *mtCurve) NewPoint(x, y GF.Elt) (P Point) {
 	if P = (&ptMt{e, &afPoint{x: x, y: y}}); e.IsOnCurve(P) {
 		return P
 	}
 	panic(fmt.Errorf("p:%v not on %v", P, e))
 }
-func (e *MTCurve) IsValid() bool {
+func (e *mtCurve) IsValid() bool {
 	F := e.F
 	t0 := F.Sqr(e.A)         // A^2
 	t0 = F.Sub(t0, F.Elt(4)) // A^2-4
 	t0 = F.Mul(t0, e.B)      // B(A^2-4)
 	return !F.IsZero(t0)     // B(A^2-4) != 0
 }
-func (e *MTCurve) IsEqual(ec EllCurve) bool {
-	e0 := ec.(*MTCurve)
+func (e *mtCurve) IsEqual(ec EllCurve) bool {
+	e0 := ec.(*mtCurve)
 	return e.F.IsEqual(e0.F) && e.F.AreEqual(e.A, e0.A) && e.F.AreEqual(e.B, e0.B)
 }
-func (e *MTCurve) IsOnCurve(p Point) bool {
+func (e *mtCurve) IsOnCurve(p Point) bool {
 	if _, isZero := p.(*infPoint); isZero {
 		return isZero
 	}
@@ -53,8 +53,8 @@ func (e *MTCurve) IsOnCurve(p Point) bool {
 	t1 = F.Mul(t1, e.B)     // By^2
 	return F.AreEqual(t0, t1)
 }
-func (e *MTCurve) Identity() Point { return &infPoint{} }
-func (e *MTCurve) Add(p, q Point) Point {
+func (e *mtCurve) Identity() Point { return &infPoint{} }
+func (e *mtCurve) Add(p, q Point) Point {
 	if p.IsIdentity() {
 		return q.Copy()
 	} else if q.IsIdentity() {
@@ -67,14 +67,14 @@ func (e *MTCurve) Add(p, q Point) Point {
 		return e.add(p, q)
 	}
 }
-func (e *MTCurve) Neg(p Point) Point {
+func (e *mtCurve) Neg(p Point) Point {
 	if _, isZero := p.(*infPoint); isZero {
 		return e.Identity()
 	}
 	P := p.(*ptMt)
 	return &ptMt{e, &afPoint{x: P.x.Copy(), y: e.F.Neg(P.y)}}
 }
-func (e *MTCurve) add(p, q Point) Point {
+func (e *mtCurve) add(p, q Point) Point {
 	P := p.(*ptMt)
 	Q := q.(*ptMt)
 	F := e.F
@@ -101,7 +101,7 @@ func (e *MTCurve) add(p, q Point) Point {
 
 	return &ptMt{e, &afPoint{x: x, y: y}}
 }
-func (e *MTCurve) Double(p Point) Point {
+func (e *mtCurve) Double(p Point) Point {
 	if _, ok := p.(*infPoint); ok {
 		return e.Identity()
 	}
@@ -135,29 +135,20 @@ func (e *MTCurve) Double(p Point) Point {
 	return &ptMt{e, &afPoint{x: x, y: y}}
 }
 
-func (e *MTCurve) ScalarMult(p Point, k *big.Int) Point {
-	Q := e.Identity()
-	for i := k.BitLen() - 1; i >= 0; i-- {
-		Q = e.Double(Q)
-		if k.Bit(i) != 0 {
-			Q = e.Add(Q, p)
-		}
-	}
-	return Q
-}
-func (e *MTCurve) ClearCofactor(p Point) Point { return e.ScalarMult(p, e.H) }
+func (e *mtCurve) ClearCofactor(p Point) Point          { return e.ScalarMult(p, e.H) }
+func (e *mtCurve) ScalarMult(p Point, k *big.Int) Point { return e.params.scalarMult(e, p, k) }
 
 // ptMt is an affine point on a Montgomery curve.
 type ptMt struct {
-	*MTCurve
+	*mtCurve
 	*afPoint
 }
 
 func (p *ptMt) String() string { return p.afPoint.String() }
-func (p *ptMt) Copy() Point    { return &ptMt{p.MTCurve, p.copy()} }
+func (p *ptMt) Copy() Point    { return &ptMt{p.mtCurve, p.copy()} }
 func (p *ptMt) IsEqual(q Point) bool {
 	qq := q.(*ptMt)
-	return p.MTCurve.IsEqual(qq.MTCurve) && p.isEqual(p.F, qq.afPoint)
+	return p.mtCurve.IsEqual(qq.mtCurve) && p.isEqual(p.F, qq.afPoint)
 }
 func (p *ptMt) IsIdentity() bool   { return false }
 func (p *ptMt) IsTwoTorsion() bool { return p.F.IsZero(p.y) }

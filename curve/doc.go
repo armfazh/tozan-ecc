@@ -34,6 +34,7 @@ type EllCurve interface {
 	Add(Point, Point) Point
 	Double(Point) Point
 	ClearCofactor(Point) Point
+	ScalarMult(Point, *big.Int) Point
 }
 
 // RationalMap represents a birational map between two elliptic curves.

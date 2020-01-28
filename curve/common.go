@@ -21,6 +21,16 @@ func (e *params) String() string {
 func (e *params) Field() GF.Field    { return e.F }
 func (e *params) Order() *big.Int    { return e.R }
 func (e *params) Cofactor() *big.Int { return e.H }
+func (e *params) scalarMult(ec EllCurve, p Point, k *big.Int) Point {
+	Q := ec.Identity()
+	for i := k.BitLen() - 1; i >= 0; i-- {
+		Q = ec.Double(Q)
+		if k.Bit(i) != 0 {
+			Q = ec.Add(Q, p)
+		}
+	}
+	return Q
+}
 
 // afPoint is an affine point.
 type afPoint struct{ x, y GF.Elt }
