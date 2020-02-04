@@ -8,7 +8,8 @@ import (
 
 // Elt represents a finite field element.
 type Elt interface {
-	Copy() Elt // Makes a copy of the element.
+	Copy() Elt              // Makes a copy of the element.
+	Polynomial() []*big.Int // Returns a polynomial representation of the element.
 }
 
 // Field describes the operations required to implement a finite field.

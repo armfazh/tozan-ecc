@@ -16,6 +16,12 @@ func (e fp2Elt) String() string {
 }
 
 func (e fp2Elt) Copy() Elt { r := &fp2Elt{}; r.a.Set(e.a); r.b.Set(e.b); return r }
+func (e fp2Elt) Polynomial() []*big.Int {
+	return []*big.Int{
+		new(big.Int).Set(e.a),
+		new(big.Int).Set(e.b),
+	}
+}
 
 type fp2 struct {
 	p    *big.Int

@@ -10,8 +10,9 @@ import (
 // fpElt is a prime field element.
 type fpElt struct{ n *big.Int }
 
-func (e fpElt) String() string { return "0x" + e.n.Text(16) }
-func (e fpElt) Copy() Elt      { return &fpElt{new(big.Int).Set(e.n)} }
+func (e fpElt) String() string         { return "0x" + e.n.Text(16) }
+func (e fpElt) Copy() Elt              { return &fpElt{new(big.Int).Set(e.n)} }
+func (e fpElt) Polynomial() []*big.Int { return []*big.Int{new(big.Int).Set(e.n)} }
 
 // fp implements a prime field.
 type fp struct {
