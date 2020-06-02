@@ -40,18 +40,8 @@ type Field interface {
 	Exp(x Elt, n *big.Int) Elt // Returns x^n.
 	Inv0(Elt) Elt              // Returns 1/x, and 0 if x=0.
 	CMov(x, y Elt, b bool) Elt // Returns x if b=false, otherwise, returns y.
-	GetSgn0(Sgn0ID) func(Elt) int
-	hasSqrt
+	Sgn0(x Elt) int            // Returns the sign of x.
+	hasSqrt                    // Returns a square-root of x.
 }
 
 type hasSqrt interface{ Sqrt(Elt) Elt }
-
-// Sgn0ID is an identifier of a sign function.
-type Sgn0ID int
-
-const (
-	// SignLE denotes little-endian sign function.
-	SignLE Sgn0ID = iota
-	// SignBE denotes big-endian sign function.
-	SignBE
-)

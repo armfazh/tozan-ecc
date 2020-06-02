@@ -101,17 +101,7 @@ func (f fp) Exp(x Elt, y *big.Int) Elt {
 // Implementing extended operations
 func (f fp) Generator() Elt { return f.One() }
 func (f fp) Inv0(x Elt) Elt { return f.Inv(x) }
-func (f fp) GetSgn0(id Sgn0ID) func(Elt) int {
-	if id == SignBE {
-		return f.Sgn0BE
-	}
-	if id == SignLE {
-		return f.Sgn0LE
-	}
-	panic("Wrong signID")
-}
-func (f fp) Sgn0BE(x Elt) int { return 1 - 2*((f.cte.pMinus1div2.Cmp(x.(*fpElt).n)>>1)&1) }
-func (f fp) Sgn0LE(x Elt) int { return 1 - 2*int(x.(*fpElt).n.Bit(0)) }
+func (f fp) Sgn0(x Elt) int { return int(x.(*fpElt).n.Bit(0)) }
 func (f fp) CMov(x, y Elt, b bool) Elt {
 	var z big.Int
 	if b {
