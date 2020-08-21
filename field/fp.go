@@ -37,6 +37,15 @@ func NewFp(name string, p interface{}) Field {
 }
 
 func (f *fp) precmp() {
+	pMinus1div2 := big.NewInt(1)
+	pMinus1div2.Sub(f.p, pMinus1div2)
+	pMinus1div2.Rsh(pMinus1div2, 1)
+
+	pMinus2 := big.NewInt(2)
+	pMinus2.Sub(f.p, pMinus2)
+	f.cte.pMinus1div2 = pMinus1div2
+	f.cte.pMinus2 = pMinus2
+
 	t := big.NewInt(16)
 	pMod16 := t.Mod(f.p, t).Uint64()
 	switch {
@@ -49,15 +58,6 @@ func (f *fp) precmp() {
 	case pMod16%16 == uint64(1):
 		f.hasSqrt = generateSqrt1mod16(f)
 	}
-
-	pMinus1div2 := big.NewInt(1)
-	pMinus1div2.Sub(f.p, pMinus1div2)
-	pMinus1div2.Rsh(pMinus1div2, 1)
-
-	pMinus2 := big.NewInt(2)
-	pMinus2.Sub(f.p, pMinus2)
-	f.cte.pMinus1div2 = pMinus1div2
-	f.cte.pMinus2 = pMinus2
 }
 
 func (f fp) String() string       { return fmt.Sprintf("GF(%v)", f.name) }
@@ -156,5 +156,106 @@ func (s sqrt5mod8) Sqrt(x Elt) Elt {
 	return s.CMov(t1, t0, e)
 }
 
-func generateSqrt9mod16(f *fp) hasSqrt { panic("not implemented yet") }
-func generateSqrt1mod16(f *fp) hasSqrt { panic("not implemented yet") }
+type sqrt9mod16 struct {
+	*fp
+	c1 *fpElt   // c1 = sqrt(-1) in F, i.e., (c1^2) == -1 in F
+	c2 *fpElt   // c2 = sqrt(c1) in F, i.e., (c2^2) == c1 in F
+	c3 *fpElt   // c3 = sqrt(-c1) in F, i.e., (c3^2) == -c1 in F
+	c4 *big.Int // c4 = (q + 7) / 16         # Integer arithmetic
+}
+
+func (s sqrt9mod16) Sqrt(x Elt) Elt {
+	tv1 := s.Exp(x, s.c4)
+	tv2 := s.Mul(s.c1, tv1)
+	tv3 := s.Mul(s.c2, tv1)
+	tv4 := s.Mul(s.c3, tv1)
+	e1 := s.AreEqual(s.Sqr(tv2), x)
+	e2 := s.AreEqual(s.Sqr(tv3), x)
+	tv1 = s.CMov(tv1, tv2, e1)
+	tv2 = s.CMov(tv4, tv3, e2)
+	e3 := s.AreEqual(s.Sqr(tv2), x)
+	return s.CMov(tv1, tv2, e3)
+}
+
+func generateSqrt9mod16(f *fp) hasSqrt {
+	panic("not implemented")
+}
+
+type sqrt1mod16 struct {
+	*fp
+	c1 *big.Int
+	c3 *big.Int
+	c5 *fpElt
+}
+
+func (s sqrt1mod16) Sqrt(x Elt) Elt {
+	z := s.Exp(x, s.c3)
+	t := s.Mul(s.Sqr(z), x)
+	z = s.Mul(z, x)
+	b := t
+	c := s.c5
+
+	one := big.NewInt(1)
+	endOuter := big.NewInt(2)
+	endInner := new(big.Int)
+	for i := new(big.Int).Set(s.c1); i.Cmp(endOuter) != 0; i.Sub(i, one) {
+		endInner.Sub(i, endOuter)
+		for j := new(big.Int).Set(one); j.Cmp(endInner) != 0; j.Add(j, one) {
+			b = s.Sqr(b)
+		}
+		z = s.CMov(z, s.Mul(z, c), !s.AreEqual(b, s.One()))
+		c = s.Sqr(c).(*fpElt)
+		t = s.CMov(t, s.Mul(t, c), !s.AreEqual(b, s.One()))
+		b = t
+	}
+
+	return z
+}
+
+func generateSqrt1mod16(f *fp) hasSqrt {
+	one := big.NewInt(1)
+	two := big.NewInt(2)
+	c1 := findC1(f)
+
+	c2 := f.Order()
+	c2.Sub(c2, one)
+	c2.Div(c2, (&big.Int{}).Exp(two, c1, nil))
+
+	c3 := (&big.Int{}).Sub(c2, one)
+	c3.Div(c3, two)
+
+	c4 := findNonSquare(f)
+	c5 := f.Exp(c4, c2).(*fpElt)
+
+	fmt.Printf("c1: %v, c2: %v, c3: %v, c4: %v, c5: %v\n", c1, c2, c3, c4, c5)
+
+	return sqrt1mod16{fp: f, c1: c1, c3: c3, c5: c5}
+}
+
+// Find the largest integer c1 such that 2^c1 divides q-1
+func findC1(f *fp) *big.Int {
+	zero := big.NewInt(0)
+	one := big.NewInt(1)
+	two := big.NewInt(2)
+
+	c1 := big.NewInt(1)
+	qMinus1 := (&big.Int{}).Sub(f.Order(), one)
+	for ; ; c1.Add(c1, one) {
+		qMinus1.Div(qMinus1, two)
+		if (&big.Int{}).Mod(qMinus1, two).Cmp(zero) == 1 {
+			return c1
+		}
+	}
+	panic("no valid c1 found")
+}
+
+// Find a non square in the field
+func findNonSquare(f *fp) Elt {
+	two := &fpElt{big.NewInt(2)}
+	for i := two.Copy(); !f.AreEqual(i, f.Zero()); i = f.Add(i, f.One()) {
+		if !f.IsSquare(i) {
+			return i
+		}
+	}
+	panic("no non-squares found")
+}
