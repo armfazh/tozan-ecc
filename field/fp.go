@@ -211,6 +211,7 @@ func (s sqrt1mod16) Sqrt(x Elt) Elt {
 	return z
 }
 
+// Tonelli-Shanks algorithm.
 func generateSqrt1mod16(f *fp) hasSqrt {
 	one := big.NewInt(1)
 	two := big.NewInt(2)
@@ -226,7 +227,6 @@ func generateSqrt1mod16(f *fp) hasSqrt {
 	c4 := findNonSquare(f)
 	c5 := f.Exp(c4, c2).(*fpElt)
 
-	fmt.Printf("c1: %v, c2: %v, c3: %v, c4: %v, c5: %v\n", c1, c2, c3, c4, c5)
 
 	return sqrt1mod16{fp: f, c1: c1, c3: c3, c5: c5}
 }
