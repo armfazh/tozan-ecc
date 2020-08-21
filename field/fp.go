@@ -192,15 +192,14 @@ func (s sqrt1mod16) Sqrt(x Elt) Elt {
 	z := s.Exp(x, s.c3)
 	t := s.Mul(s.Sqr(z), x)
 	z = s.Mul(z, x)
-	b := t
-	c := s.c5
+	b := t.Copy()
+	c := s.c5.Copy()
 
 	one := big.NewInt(1)
-	endOuter := big.NewInt(2)
 	endInner := new(big.Int)
-	for i := new(big.Int).Set(s.c1); i.Cmp(endOuter) != 0; i.Sub(i, one) {
-		endInner.Sub(i, endOuter)
-		for j := new(big.Int).Set(one); j.Cmp(endInner) != 0; j.Add(j, one) {
+	for i := new(big.Int).Set(s.c1); i.Cmp(one) > 0; i.Sub(i, one) {
+		endInner.Sub(i, one)
+		for j := new(big.Int).Set(one); j.Cmp(endInner) < 0; j.Add(j, one) {
 			b = s.Sqr(b)
 		}
 		z = s.CMov(z, s.Mul(z, c), !s.AreEqual(b, s.One()))
