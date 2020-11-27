@@ -133,19 +133,20 @@ type sqrt5mod8 struct {
 }
 
 func generateSqrt5mod8(f *fp) hasSqrt {
-	// calculates s = sqrt(-1) for p=8*k+5
-	// t = 2^k
-	// s = 2*t^3+t
+	// Calculates c1 = sqrt(-1) mod p, for p=8*k+5
+	// x(a) = -1 iff a^(4k+2) = -1
+	//   sqrt(-1) = sqrt(a^(4k+2))
+	//            = a^(2k+1)
+	// Since x(2) = -1, 2 \in QNR, then
+	//   sqrt(-1) = 2^(2k+1).
 	k := big.NewInt(5)
-	k.Sub(f.p, k)           // p-5
-	k.Rsh(k, 3)             // k = (p-5)/8
-	t := f.Exp(f.Elt(2), k) // t = 2^k
-	s := f.Sqr(t)           // t^2
-	s = f.Add(s, s)         // 2t^2
-	s = f.Add(s, f.One())   // 2t^2+1
-	s = f.Mul(s, t)         // t(2t^2+1)
-	k.Add(k, big.NewInt(1)) // e = k+1 = (p+3)/8
-	return sqrt5mod8{fp: f, exp: k, sqrtOne: s.(*fpElt)}
+	k.Sub(f.p, k)            // p-5
+	k.Rsh(k, 3)              // k = (p-5)/8
+	c1 := f.Exp(f.Elt(2), k) // c1 = 2^(k)
+	c1 = f.Sqr(c1)           //    = 2^(2k)
+	c1 = f.Add(c1, c1)       //    = 2^(2k+1)
+	k.Add(k, big.NewInt(1))  // e = k+1 = (p+3)/8
+	return sqrt5mod8{fp: f, exp: k, sqrtOne: c1.(*fpElt)}
 }
 
 func (s sqrt5mod8) Sqrt(x Elt) Elt {
@@ -178,7 +179,30 @@ func (s sqrt9mod16) Sqrt(x Elt) Elt {
 }
 
 func generateSqrt9mod16(f *fp) hasSqrt {
-	panic("not implemented")
+	// Calculates c1 = sqrt(-1) mod p, for p=16*k+9
+	// x(a) = -1 iff a^(8k+4) = -1
+	//   c1 = sqrt(-1)
+	//      = sqrt(a^(8k+4))
+	//      = a^(4k+2)
+	//   c2 = sqrt(sqrt(-1))
+	//      = sqrt(a^(4k+2))
+	//      = a^(2k+1)
+	//   c3 = sqrt(-sqrt(-1))
+	//      = sqrt(-1) * sqrt(-sqrt(-1))
+	//      = c1*c2
+	//
+	// find a such that x(a) = -1.
+	k := big.NewInt(9)
+	k.Sub(f.p, k)                 // p-9
+	k.Rsh(k, 4)                   // k = (p-9)/16
+	a := findNonSquare(f)         // a is QNR
+	c2 := f.Exp(a, k)             // c2 = a^(k)
+	c2 = f.Sqr(c2)                //    = a^(2k)
+	c2 = f.Mul(c2, a)             //    = a^(2k+1)
+	c1 := f.Sqr(c2)               // c1 = a^(4k+2)
+	c3 := f.Mul(c1, c2)           // c3 = c1*c2
+	c4 := k.Add(k, big.NewInt(1)) // e = k+1 = (p+7)/16
+	return sqrt9mod16{f, c1.(*fpElt), c2.(*fpElt), c3.(*fpElt), c4}
 }
 
 type sqrt1mod16 struct {
@@ -226,7 +250,6 @@ func generateSqrt1mod16(f *fp) hasSqrt {
 
 	c4 := findNonSquare(f)
 	c5 := f.Exp(c4, c2).(*fpElt)
-
 
 	return sqrt1mod16{fp: f, c1: c1, c3: c3, c5: c5}
 }
