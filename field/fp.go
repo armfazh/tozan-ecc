@@ -262,13 +262,13 @@ func findC1(f *fp) *big.Int {
 
 	c1 := big.NewInt(1)
 	qMinus1 := (&big.Int{}).Sub(f.Order(), one)
+	// loops until a valid c1 is found.
 	for ; ; c1.Add(c1, one) {
 		qMinus1.Div(qMinus1, two)
 		if (&big.Int{}).Mod(qMinus1, two).Cmp(zero) == 1 {
 			return c1
 		}
 	}
-	panic("no valid c1 found")
 }
 
 // Find a non square in the field

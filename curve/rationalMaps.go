@@ -1,8 +1,6 @@
 package curve
 
-import (
-	GF "github.com/armfazh/tozan-ecc/field"
-)
+import GF "github.com/armfazh/tozan-ecc/field"
 
 type mt2wec struct {
 	E0   *mtCurve
