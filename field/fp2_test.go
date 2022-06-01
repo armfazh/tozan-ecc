@@ -7,6 +7,12 @@ import (
 	GF "github.com/armfazh/tozan-ecc/field"
 )
 
+func TestGeneratorF2(t *testing.T) {
+	// Field taken from https://github.com/armfazh/h2c-go-ref/blob/master/field/fields.go
+	F := GF.NewFp2("BN254G2", "0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47")
+	F.Generator()
+}
+
 func TestSqrtF2(t *testing.T) {
 	var primes3mod4 = []int{59, 67, 71, 79, 83}
 	for _, p := range primes3mod4 {

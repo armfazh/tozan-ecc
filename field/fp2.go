@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"math/big"
+	"reflect"
 )
 
 type fp2Elt [2]fpElt
@@ -38,12 +39,16 @@ func (f *fp2) precmp() {
 }
 
 func (f fp2) Elt(in interface{}) Elt {
-	if v, ok := in.([]interface{}); ok && len(v) == 2 {
+
+	v := reflect.ValueOf(in)
+
+	if (v.Kind() == reflect.Slice || v.Kind() == reflect.Array) && v.Len() == 2 {
 		return &fp2Elt{
-			*(f.base.Elt(v[0]).(*fpElt)),
-			*(f.base.Elt(v[1]).(*fpElt)),
+			*(f.base.Elt(v.Index(0).Interface()).(*fpElt)),
+			*(f.base.Elt(v.Index(1).Interface()).(*fpElt)),
 		}
 	}
+
 	return &fp2Elt{
 		*(f.base.Elt(in).(*fpElt)),
 		*(f.base.Zero().(*fpElt)),
