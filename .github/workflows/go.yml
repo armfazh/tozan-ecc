@@ -1,23 +1,24 @@
-name: Go
-on: [pull_request,push]
+---
+name: tozan-ecc
+on: [pull_request, push]
 jobs:
-
   build:
-    name: Build
+    name: Build Go-${{ matrix.GOVER }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        GOVER: ['1.18', '1.17', '1.16']
     steps:
+      - name: Setup Go-${{ matrix.GOVER }}
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.GOVER }}
 
-    - name: Set up Go 1.11
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.11
-      id: go
+      - name: Checking out
+        uses: actions/checkout@v3
 
-    - name: Checking out
-      uses: actions/checkout@v2
+      - name: Building
+        run: go build -v .
 
-    - name: Building
-      run: go build -v .
-
-    - name: Testing
-      run: go test -v ./...
+      - name: Testing
+        run: go test -v ./...
