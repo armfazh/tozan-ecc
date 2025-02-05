@@ -7,18 +7,18 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        GOVER: ['1.18', '1.17', '1.16']
+        GOVER: ['1.23', '1.22']
     steps:
+      - name: Checking out
+        uses: actions/checkout@v4
+
       - name: Setup Go-${{ matrix.GOVER }}
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.GOVER }}
-
-      - name: Checking out
-        uses: actions/checkout@v3
 
       - name: Building
         run: go build -v .
 
       - name: Testing
-        run: go test -v ./...
+        run: go test -v --count=1 ./...

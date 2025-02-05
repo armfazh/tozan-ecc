@@ -1,3 +1,3 @@
 module github.com/armfazh/tozan-ecc
 
-go 1.11
+go 1.13
